@@ -1,42 +1,49 @@
 import pandas as pd
+import numpy as np
 import os
 
 
-DATASET_AVERAGES_PATH = '../data/raw/airbnb-averages.csv'
-DATASET_LISTINGS_PATH = '../data/raw/airbnb-listings.csv'
+DATASET_AVERAGES_PATH = '../data/downloaded/airbnb-averages.csv'
+DATASET_LISTINGS_PATH = '../data/downloaded/airbnb-listings.csv'
 DATASET_VERSION = 'v1.0'
 
 DATASET_OUT_DIR = '../data/raw'
 
 
-def make_dataset():
-    # Averages Dataset
-    avg_df = pd.read_csv(DATASET_AVERAGES_PATH, encoding='utf-8', sep=';')
-    
+def make_averages_dataset():
+    df = pd.read_csv(DATASET_AVERAGES_PATH, encoding='utf-8', sep=';')
+
     # Drop columns
-    avg_columns_to_drop = [
+    columns_to_drop = [
         'filename',
         'Date',
         'Location',
         'geo_shape',
         'Geo Point',
     ]
+    df.drop(columns_to_drop, axis=1, inplace=True)
 
-    avg_df.drop(avg_columns_to_drop, axis=1, inplace=True)
-    avg_fpath = os.path.join(DATASET_OUT_DIR, 'airbnb_averages_' + DATASET_VERSION + '.parquet')
-    avg_df.to_parquet(avg_fpath, compression='gzip')
+    # Save dataset
+    fpath = os.path.join(DATASET_OUT_DIR, 'airbnb_averages_' + DATASET_VERSION + '.parquet')
+    df.to_parquet(fpath, compression='gzip')
 
-    # Listings Dataset
-    list_df = pd.read_csv(DATASET_LISTINGS_PATH, encoding='utf-8', sep=';')
-    list_df['ID'] = pd.to_numeric(list_df['ID'], errors='coerce').astype('Int64')
+
+def make_listings_dataset():
+    df = pd.read_csv(DATASET_LISTINGS_PATH, encoding='utf-8', sep=';')
+
+    # Casting data
+    df['ID'] = pd.to_numeric(df['ID'], errors='coerce').astype('Int64')
+    df['Host Since'] = pd.to_datetime(df['Host Since'], errors='coerce')
+    df['Host Acceptance Rate']= df['Host Acceptance Rate'].apply(lambda x: int(x[:-1]) if (type(x) == str and x[-1] == '%') else np.nan)
 
     # Drop columns
-    list_columns_to_drop = [
+    columns_to_drop = [
         'Listing Url',
         'Scrape ID',
         'Last Scraped',
         'Summary',
         'Space',
+        'Description',
         'Experiences Offered',
         'Neighborhood Overview',
         'Notes',
@@ -74,18 +81,34 @@ def make_dataset():
         'Latitude',
         'Longitude',
     ]
+    df.drop(columns_to_drop, axis=1, inplace=True)
 
-    list_df.drop(list_columns_to_drop, axis=1, inplace=True)
-    desc_df = list_df.filter(['ID', 'Description'], axis=1)
-    filtered_list_df = list_df.drop('Description', axis=1)
-    
-    desc_chunk1 = desc_df.iloc[:len(desc_df)//2]
-    desc_chunk2 = desc_df.iloc[len(desc_df)//2:]
+    # Save dataset
+    fpath = os.path.join(DATASET_OUT_DIR, 'airbnb_listings_' + DATASET_VERSION + '.parquet')
+    df.to_parquet(fpath, compression='gzip')
 
-    listings_fname = 'airbnb_listings_' + DATASET_VERSION + '.parquet'
-    desc_chunk1_fname = 'airbnb_descriptions_chunk1_' + DATASET_VERSION + '.parquet'
-    desc_chunk2_fname = 'airbnb_descriptions_chunk2_' + DATASET_VERSION + '.parquet'
 
-    filtered_list_df.to_parquet(os.path.join(DATASET_OUT_DIR, listings_fname), compression='gzip')
-    desc_chunk1.to_parquet(os.path.join(DATASET_OUT_DIR, desc_chunk1_fname), compression='gzip')
-    desc_chunk2.to_parquet(os.path.join(DATASET_OUT_DIR, desc_chunk2_fname), compression='gzip')
+def make_descriptions_dataset():
+    df = pd.read_csv(DATASET_LISTINGS_PATH, encoding='utf-8', sep=';')
+
+    # Casting data
+    df['ID'] = pd.to_numeric(df['ID'], errors='coerce').astype('Int64')
+
+    # Filter columns
+    df = df.filter(['ID', 'Description'], axis=1)
+
+    # Split data into chunks
+    chunk1_df = df.iloc[:len(df)//2]
+    chunk2_df = df.iloc[len(df)//2:]
+
+    # Save dataset
+    fname_c1 = 'airbnb_descriptions_chunk1_' + DATASET_VERSION + '.parquet'
+    fname_c2 = 'airbnb_descriptions_chunk2_' + DATASET_VERSION + '.parquet'
+    chunk1_df.to_parquet(os.path.join(DATASET_OUT_DIR, fname_c1), compression='gzip')
+    chunk2_df.to_parquet(os.path.join(DATASET_OUT_DIR, fname_c2), compression='gzip')
+
+
+def make_datasets():
+    make_averages_dataset()
+    make_listings_dataset()
+    make_descriptions_dataset()
