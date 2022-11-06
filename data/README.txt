@@ -17,9 +17,7 @@ Zipcode
 Country
 Property Type                   : Entire place | Private room | Shared room.
 Room Type
-Bathrooms
-Bedrooms
-Beds
+Bed Type
 Amenities
 Cancellation Policy
 Features
@@ -35,7 +33,9 @@ Host Acceptance Rate            : Rate at which a host accepts booking requests.
 Host Listings Count             : The number of listings the host has.
 Host Total Listings Count       : The number of listings the host has.
 Accommodates                    : The maximum capacity of the listing.
-Bed Type
+Bathrooms
+Bedrooms
+Beds
 Square Feet
 Price                           : In local currency.
 Weekly Price                    : In local currency.
@@ -57,5 +57,5 @@ Review Scores Cleanliness
 Review Scores Checkin
 Review Scores Communication
 Review Scores Location
-Review Value
+Review Scores Value
 Reviews per Month
